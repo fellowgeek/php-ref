@@ -1,12 +1,12 @@
-
 .ref{
-  font: normal normal 12px/18px Consolas, Monaco, Andale Mono, Courier New, monospace;  
+  font: normal normal 12px/18px Consolas, "Liberation Mono", Menlo, "Courier New", Courier, monospace;
   color: #333;
 }
 
 /* reset default styles for these elements */
 .ref i,
 .ref span,
+.ref r,
 .ref a{
   font-style: inherit;  
   font-weight: inherit;
@@ -20,17 +20,20 @@
 }
 
 /* meta content (used to generate tooltips) */
-.ref > div{
+.ref > div,
+.ref > t{
   display: none;  
 }
 
 /* show help cursor when mouse is over an entity with a tooltip */
-.ref [data-tip]{
+.ref [data-tip],
+.ref [h]{
   cursor: help;
 }
 
 /* pointer if inside a link */
-.ref a > [data-tip]{
+.ref a > [data-tip],
+.ref a > [h]{
   cursor: pointer;
 }
 
@@ -57,9 +60,7 @@
   border-radius: 4px;
   opacity: 0.90;
   box-shadow:0 0 4px rgba(0,0,0, 0.25);  
-  -webkit-transition: opacity .25s, margin .25s;
-     -moz-transition: opacity .25s, margin .25s;
-      -ms-transition: opacity .25s, margin .25s;
+  -webkit-transition: opacity .25s, margin .25s;     
           transition: opacity .25s, margin .25s;
 }
 
@@ -73,7 +74,8 @@
   margin: 20px 0 0 25px;
 }
 
-#rTip [data-cell]{
+#rTip [data-cell],
+#rTip [c]{
   padding: 2px 7px;
 }
 
@@ -88,7 +90,8 @@
   color: #777;  
 }
 
-#rTip [data-cell][data-varType]{
+#rTip [data-cell][data-varType],
+#rTip [c][data-varType]{
   padding: 10px;
   background: #333;
   box-shadow: inset -1px 0 0 #444;    
@@ -97,7 +100,8 @@
   border-bottom-left-radius: 4px;  
 }
 
-#rTip [data-cell][data-sub]{
+#rTip [data-cell][data-sub],
+#rTip [c][data-sub]{
   padding: 8px 10px 10px 10px;
   background: #333;
   box-shadow: inset 0 1px 0 #444;    
@@ -106,12 +110,14 @@
   border-bottom-left-radius: 4px;
 }
 
-#rTip [data-table] [data-cell]:first-child{
+#rTip [data-table] [data-cell]:first-child,
+#rTip [t] [c]:first-child{
   font: bold 11px Helvetica, Arial;   
   color: #888;
 }
 
-#rTip [data-table] [data-cell]:nth-child(2){
+#rTip [data-table] [data-cell]:nth-child(2),
+#rTip [t] [c]:nth-child(2){
   color: #edd078;
 }
 
@@ -119,7 +125,7 @@
 
 
 /* base entity - can be nested */
-.ref span{
+.ref span, .ref r{
   white-space: pre;
   display: inline;
 }
@@ -137,9 +143,7 @@
   display: block;
   color: #ccc;
   background-color: #333;
-  background-image: -webkit-linear-gradient(top, #444, #333);  
-  background-image: -moz-linear-gradient(top, #444, #333);
-  background-image: -ms-linear-gradient(top, #444, #333);
+  background-image: -webkit-linear-gradient(top, #444, #333);    
   background-image: linear-gradient(top, #444, #333);  
   border-radius: 4px 4px 0 0;
   border-bottom: 1px solid #fff;  
@@ -172,30 +176,30 @@
   border-width: 7px 0 7px 10px;
   border-color: transparent transparent transparent #CC0033;
   cursor: pointer;
-  -webkit-transition: all ease-in .15s;  
-     -moz-transition: all ease-in .15s;     
-      -ms-transition: all ease-in .15s;          
+  -webkit-transition: all ease-in .15s;       
           transition: all ease-in .15s;    
 }
 
 /* collapse graphic */
 .ref [data-toggle][data-exp]{
   -webkit-transform: rotate(90deg);
-     -moz-transform: rotate(90deg);       
       -ms-transform: rotate(90deg);
           transform: rotate(90deg);  
 }
 
-.ref [data-group]{
+.ref [data-group],
+.ref [g]{
   display: none;
 }
 
-.ref [data-toggle][data-exp] ~ [data-group]{
+.ref [data-toggle][data-exp] ~ [data-group],
+.ref [data-toggle][data-exp] ~ [g]{
   display: block;
 }
 
 /* group sections */
-.ref [data-table]{
+.ref [data-table],
+.ref [t]{
   display: table;
 }
 
@@ -210,16 +214,20 @@
 
 /* emulate a table for displaying array & object members */
 /* section row */
-.ref [data-row]{
+.ref [data-row],
+.ref [r]{
   display: table-row; 
 }
 
 /* zebra-like rows */
 .ref [data-output] [data-row]:nth-child(odd){background: #f4f4f4;}
 .ref [data-output] [data-row]:nth-child(even){background: #f9f9f9;}
+.ref [data-output] [r]:nth-child(odd){background: #f4f4f4;}
+.ref [data-output] [r]:nth-child(even){background: #f9f9f9;}
 
 /* section cells */
-.ref [data-cell]{
+.ref [data-cell],
+.ref [c]{
   display: table-cell;
   width: auto;
   vertical-align: top;
@@ -228,7 +236,9 @@
 
 /* last cell of a row (forces table to adjust width like we want to) */
 .ref [data-output] [data-table],
-.ref [data-output] [data-cell]:last-child{
+.ref [data-output] [t],
+.ref [data-output] [data-cell]:last-child,
+.ref [data-output] [c]:last-child{
   width: 100%;
 }
 
@@ -240,7 +250,8 @@
 .ref [data-null],
 .ref [data-unknown],
 .ref [data-resource],
-.ref [data-match]{
+.ref [data-match],
+.ref [m]{
   font: bold 11px Helvetica, Arial; 
   color: #fff;        
   padding: 1px 3px;
@@ -250,13 +261,12 @@
   margin-right: 5px;
   background-color: #eee;  
   background-image: -webkit-linear-gradient(top, rgba(255,255,255,0.1) 40%,rgba(0,0,0,0.1) 100%);  
-  background-image: -moz-linear-gradient(top, rgba(255,255,255,0.1) 40%, rgba(0,0,0,0.1) 100%);
-  background-image: -ms-linear-gradient(top, rgba(255,255,255,0.1) 40%,rgba(0,0,0,0.1) 100%);
   background-image: linear-gradient(to bottom, rgba(255,255,255,0.1) 40%,rgba(0,0,0,0.1) 100%);
 }
 
 /* string matches */
-.ref [data-match]{
+.ref [data-match],
+.ref [m]{
   background-color: #d78035;
 }
 
@@ -300,6 +310,16 @@
   background: #e8f0e1;
   color: #669933;  
   padding: 3px 1px;
+  
+  /* prevent long strings from breaking the page layout */
+	white-space: -moz-pre-wrap; /* Mozilla */
+	white-space: -hp-pre-wrap; /* HP printers */
+	white-space: -o-pre-wrap; /* Opera 7 */
+	white-space: -pre-wrap; /* Opera 4-6 */
+	white-space: pre-wrap; /* CSS 2.1 */
+	white-space: pre-line; /* CSS 3 (and 2.1 as well, actually) */
+	word-wrap: break-word; /* IE */
+	word-break: break-all;
 }
 
 .ref [data-string][data-special]{
@@ -356,7 +376,8 @@
 }
 
 /* group info prefix */
-.ref [data-gLabel]{
+.ref [data-gLabel],
+.ref [gl]{
   font: bold 11px Helvetica, Arial;  
   padding: 0 3px;
   color: #333;
@@ -373,7 +394,8 @@
   color: #444;
 }
 
-.ref [data-mod] span{
+.ref [data-mod] span,
+.ref [data-mod] r{
   display: inline-block;  
   margin: 0 2px;  
   width: 14px;
@@ -386,6 +408,10 @@
 .ref [data-mod-interface],
 .ref [data-mod-abstract]{
   background: #baed78;
+}
+
+.ref [data-mod-anonymous]{
+  background: #444;
 }
 
 .ref [data-mod-protected]{
@@ -460,4 +486,13 @@
 .ref [data-regex-g5]{
   background: #00ff00;
   color: #2c8e24;
+}
+
+.ref [data-error]{
+  background: #CC0033;
+  color: #fff;
+  border-radius: 0 0 4px 4px;
+  padding: 2px 5px;  
+  margin: 0 0 4px;
+  display: block;
 }
