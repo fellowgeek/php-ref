@@ -24,7 +24,7 @@ Add REF to your `composer.json`:
 Now tell composer to download the bundle by running:
 
 ``` bash
-$ php composer.phar update digitalnature/php-ref
+$ php composer.phar update fellowgeek/php-ref
 ```
 
 Composer will install the bundle to the directory `vendor/fellowgeek`.
