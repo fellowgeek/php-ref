@@ -21,7 +21,7 @@ function r(){
 
   // something went wrong while trying to parse the source expressions?
   // if so, silently ignore this part and leave out the expression info
-  if(func_num_args() !== count(is_array($expressions) ? $expressions : []))
+  if(func_num_args() !== count($expressions))
     $expressions = null;
 
   // use HTML formatter only if we're not in CLI mode, or if return was requested
@@ -37,7 +37,7 @@ function r(){
     ob_start();
 
   foreach($args as $index => $arg)
-    $ref->query($arg, $expressions ? $expressions[$index] : '');
+    $ref->query($arg, $expressions ? $expressions[$index] : null);
 
   // return the results if this function was called with the error suppression operator
   if($capture)
@@ -263,7 +263,10 @@ class ref{
       'is56'         => version_compare(PHP_VERSION, '5.6') >= 0,
 
       // php 7.0+ ?
-      'is7'          => version_compare(PHP_VERSION, '7.0') >= 0,
+      'is7'          => version_compare(PHP_VERSION, '7.0') >= 0 && version_compare(PHP_VERSION,       '8.0') < 0,
+
+      // php 8.0+ ?
+      'is8'          => version_compare(PHP_VERSION, '8.0') >= 0,
 
       // curl extension running?
       'curlActive'   => function_exists('curl_version'),
@@ -868,6 +871,10 @@ class ref{
       if(is_string($token) || ($token[0] !== T_STRING) || (strcasecmp($token[1], $function) !== 0))
         continue;
 
+      // is this some method that happens to have the same name as the shortcut function?
+      if(isset($tokens[$i - 1]) && is_array($tokens[$i - 1]) && in_array($tokens[$i - 1][0], array(T_DOUBLE_COLON, T_OBJECT_OPERATOR), true))
+        continue;
+
       // find argument definition start, just after '('
       if(isset($tokens[$i + 1]) && ($tokens[$i + 1][0] === '(')){
         $instIndx++;
@@ -934,6 +941,7 @@ class ref{
       }
     }
 
+    return array();
   }
 
 
@@ -1265,8 +1273,9 @@ class ref{
 
           if($keyInfo === 'string'){
             $encoding = static::$env['mbStr'] ? mb_detect_encoding($key) : '';
-            $keyLen   = $encoding && ($encoding !== 'ASCII') ? static::strLen($key) . '; ' . $encoding : static::strLen($key);
-            $keyInfo  = "{$keyInfo}({$keyLen})";
+            $keyLen     = static::strLen($key);
+            $keyLenInfo = $encoding && ($encoding !== 'ASCII') ? $keyLen . '; ' . $encoding : $keyLen;
+            $keyInfo    = "{$keyInfo}({$keyLenInfo})";
           }else{
             $keyLen   = strlen($key);
           }
@@ -1287,6 +1296,7 @@ class ref{
 
       // resource
       case 'resource':
+      case 'resource (closed)':
         $meta    = array();
         $resType = get_resource_type($subject);
 
@@ -1660,8 +1670,13 @@ class ref{
     if(static::$config['showPrivateMembers'])
       $flags |= \ReflectionProperty::IS_PRIVATE;
 
-    $props   = $reflector->getProperties($flags);
-    $methods = array();
+    $props = $magicProps = $methods = array();
+
+    if($reflector->hasMethod('__debugInfo')){
+      $magicProps = $subject->__debugInfo();
+    }else{
+      $props = $reflector->getProperties($flags);
+    }
 
     if(static::$config['showMethods']){
       $flags = \ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED;
@@ -1859,6 +1874,46 @@ class ref{
       }
     }
 
+    // __debugInfo()
+    if($magicProps){
+      $this->fmt->sectionTitle('Properties (magic)');
+
+      $max = 0;
+      foreach($magicProps as $name => $value)
+        if(($propNameLen = static::strLen($name)) > $max)
+          $max = $propNameLen;
+
+      foreach($magicProps as $name => $value){
+
+        if($this->hasInstanceTimedOut())
+          break;
+
+        // attempt to pull out doc comment from the "regular" property definition
+        try{
+          $prop = $reflector->getProperty($name);
+          $meta = static::parseComment($prop->getDocComment());
+
+        }catch(\Exception $e){
+          $meta = null;
+        }
+
+        $this->fmt->startRow();
+        $this->fmt->sep('->');
+        $this->fmt->colDiv();
+
+        $type = array('prop');
+
+        $this->fmt->startContain($type);
+        $this->fmt->text('name', $name, $meta);
+        $this->fmt->endContain();
+        $this->fmt->colDiv($max - static::strLen($name));
+        $this->fmt->sep('=');
+        $this->fmt->colDiv();
+        $this->evaluate($value);
+        $this->fmt->endRow();
+      }
+    }
+
     // class methods
     if($methods && !$this->hasInstanceTimedOut()){
 
@@ -1946,7 +2001,13 @@ class ref{
           }
 
           try{
-            $paramClass = $parameter->getClass();
+            if(static::$env['is8']){
+              $paramClass = $parameter->getType() && !$parameter->getType()->isBuiltin()
+                ? new ReflectionClass($parameter->getType()->getName())
+                : null;
+            }else{
+              $paramClass = $parameter->getClass();
+            }
           }catch(\Exception $e){
             // @see https://bugs.php.net/bug.php?id=32177&edit=1
           }
@@ -1956,11 +2017,9 @@ class ref{
             $this->fromReflector($paramClass, $paramClass->name);
             $this->fmt->endContain();
             $this->fmt->sep(' ');
-
-          }elseif($parameter->isArray()){
+          }elseif((static::$env['is8'] && $parameter->getType() && $parameter->getType()->getName() === 'array') || (static::$env['is7'] && $parameter->isArray())) {
             $this->fmt->text('hint', 'array');
             $this->fmt->sep(' ');
-
           }else{
             $hasType = static::$env['is7'] && $parameter->hasType();
             if($hasType){
@@ -1973,15 +2032,23 @@ class ref{
           $this->fmt->text('name', $paramName, $meta);
 
           if($optional){
-            $paramValue = $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
-            $this->fmt->sep(' = ');
+            try{
+              $paramValue = $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
+              if($paramValue !== null){
+                $this->fmt->sep(' = ');
 
-            if(static::$env['is546'] && !$parameter->getDeclaringFunction()->isInternal() && $parameter->isDefaultValueConstant()){
-              $this->fmt->text('constant', $parameter->getDefaultValueConstantName(), 'Constant');
+                if(static::$env['is546'] && !$parameter->getDeclaringFunction()->isInternal() && $parameter->isDefaultValueConstant()){
+                  $this->fmt->text('constant', $parameter->getDefaultValueConstantName(), 'Constant');
 
-            }else{
-              $this->evaluate($paramValue, true);
+                }else{
+                  $this->evaluate($paramValue, true);
+                }
+              }
+
+            }catch(\Exception $e){
+              // unable to retrieve default value?
             }
+
           }
 
           $this->fmt->endContain();
@@ -2566,8 +2633,8 @@ class RHtmlFormatter extends RFormatter{
   public function endExp(){
     if(ref::config('showBacktrace') && ($trace = ref::getBacktrace())){
       $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '';
-      $path = strpos($trace['file'], $docRoot) !== 0 ? ltrim($trace['file'], '/') : ltrim(str_replace($docRoot, '', $trace['file']), '/');
-      $this->out .= "<{$this->def['base']} data-backtrace>/{$path}:{$trace['line']}</{$this->def['base']}>";
+      $path = strpos($trace['file'], $docRoot) !== 0 ? $trace['file'] : ltrim(str_replace($docRoot, '', $trace['file']), '/');
+      $this->out .= "<{$this->def['base']} data-backtrace>{$path}:{$trace['line']}</{$this->def['base']}>";
     }
 
     $this->out .= "</{$this->def['base']}><{$this->def['base']} data-output>";
