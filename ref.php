@@ -2002,8 +2002,8 @@ class ref{
 
           try{
             if(static::$env['is8']){
-              $paramClass = $parameter->getType() && !$parameter->getType()->isBuiltin()
-                ? new ReflectionClass($parameter->getType()->getName())
+              $paramClass = $parameter->getType() && !$parameter->getType()
+                ? new ReflectionClass($parameter->getType())
                 : null;
             }else{
               $paramClass = $parameter->getClass();
@@ -2017,7 +2017,7 @@ class ref{
             $this->fromReflector($paramClass, $paramClass->name);
             $this->fmt->endContain();
             $this->fmt->sep(' ');
-          }elseif((static::$env['is8'] && $parameter->getType() && $parameter->getType()->getName() === 'array') || (static::$env['is7'] && $parameter->isArray())) {
+          }elseif((static::$env['is8'] && $parameter->getType() && $parameter->getType() === 'array') || (static::$env['is7'] && $parameter->isArray())) {
             $this->fmt->text('hint', 'array');
             $this->fmt->sep(' ');
           }else{
@@ -2089,95 +2089,7 @@ class ref{
    */
   protected function evaluateExp($expression = null){
 
-    if($expression === null)
-      return;
-
-    if(static::strLen($expression) > 120)
-      $expression = substr($expression, 0, 120) . '...';
-
-    $this->fmt->sep('> ');
-
-    if(strpos($expression, '(') === false)
-      return $this->fmt->text('expTxt', $expression);
-
-    $keywords = array_map('trim', explode('(', $expression, 2));
-    $parts = array();
-
-    // try to find out if this is a function
-    try{
-      $reflector = new \ReflectionFunction($keywords[0]);
-      $parts[] = array($keywords[0], $reflector, '');
-
-    }catch(\Exception $e){
-
-      if(stripos($keywords[0], 'new ') === 0){
-        $cn = explode(' ' , $keywords[0], 2);
-
-        // linkify 'new keyword' (as constructor)
-        try{
-          $reflector = new \ReflectionMethod($cn[1], '__construct');
-          $parts[] = array($cn[0], $reflector, '');
-
-        }catch(\Exception $e){
-          $reflector = null;
-          $parts[] = $cn[0];
-        }
-
-        // class name...
-        try{
-          $reflector = new \ReflectionClass($cn[1]);
-          $parts[] = array($cn[1], $reflector, ' ');
-
-        }catch(\Exception $e){
-          $reflector = null;
-          $parts[] = $cn[1];
-        }
-
-      }else{
-
-        // we can only linkify methods called statically
-        if(strpos($keywords[0], '::') === false)
-          return $this->fmt->text('expTxt', $expression);
-
-        $cn = explode('::', $keywords[0], 2);
-
-        // attempt to linkify class name
-        try{
-          $reflector = new \ReflectionClass($cn[0]);
-          $parts[] = array($cn[0], $reflector, '');
-
-        }catch(\Exception $e){
-          $reflector = null;
-          $parts[] = $cn[0];
-        }
-
-        // perhaps it's a static class method; try to linkify method
-        try{
-          $reflector = new \ReflectionMethod($cn[0], $cn[1]);
-          $parts[] = array($cn[1], $reflector, '::');
-
-        }catch(\Exception $e){
-          $reflector = null;
-          $parts[] = $cn[1];
-        }
-      }
-    }
-
-    $parts[] = "({$keywords[1]}";
-
-    foreach($parts as $element){
-      if(!is_array($element)){
-        $this->fmt->text('expTxt', $element);
-        continue;
-      }
-
-      list($text, $reflector, $prefix) = $element;
-
-      if($prefix !== '')
-        $this->fmt->text('expTxt', $prefix);
-
-      $this->fromReflector($reflector, $text);
-    }
+    return $this->fmt->text('expTxt', '>');
 
   }
 
@@ -2759,7 +2671,7 @@ class RHtmlFormatter extends RFormatter{
    * @return  string|array
    */
   protected static function escape($var){
-    return is_array($var) ? array_map('static::escape', $var) : htmlspecialchars($var, ENT_QUOTES);
+    return is_array($var) ? array_map('static::escape', $var) : htmlspecialchars($var ?? '', ENT_QUOTES);
   }
 
 }
