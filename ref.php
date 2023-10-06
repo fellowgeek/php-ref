@@ -2089,7 +2089,7 @@ class ref{
    */
   protected function evaluateExp($expression = null){
 
-    return $this->fmt->text('expTxt', '>');
+    return $this->fmt->text('expTxt', '> ' . ($GLOBALS['debugLabel'] ?? ''));
 
   }
 
