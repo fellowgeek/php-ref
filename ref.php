@@ -1257,13 +1257,13 @@ class ref{
         if(!$this->fmt->startGroup($count))
           return;
 
-        $max = max(array_map('static::strLen', array_keys($subject)));
-        $subject[static::MARKER_KEY] = true;
+        $max = max(array_map(self::class . '::strLen', array_keys($subject)));
+        $subject[self::class . '::MARKER_KEY'] = true;
 
         foreach($subject as $key => &$value){
 
           // ignore our temporary marker
-          if($key === static::MARKER_KEY)
+          if($key === self::class . '::MARKER_KEY')
             continue;
 
           if($this->hasInstanceTimedOut())
@@ -1289,7 +1289,7 @@ class ref{
           $this->fmt->endRow();
         }
 
-        unset($subject[static::MARKER_KEY]);
+        unset($subject[self::class . '::MARKER_KEY']);
 
         $this->fmt->endGroup();
         return;
@@ -1390,7 +1390,7 @@ class ref{
         if(!$this->fmt->startGroup($resType))
           return;
 
-        $max = max(array_map('static::strLen', array_keys($meta)));
+        $max = max(array_map(self::class . '::strLen', array_keys($meta)));
         foreach($meta as $key => $value){
           $this->fmt->startRow();
           $this->fmt->text('resourceProp', ucwords(str_replace('_', ' ', $key)));
@@ -1779,7 +1779,7 @@ class ref{
     // class constants
     if($constants){
       $this->fmt->sectionTitle('Constants');
-      $max = max(array_map('static::strLen', array_keys($constants)));
+      $max = max(array_map(self::class . '::strLen', array_keys($constants)));
       foreach($constants as $name => $value){
         $meta = null;
         $type = array('const');
@@ -2671,7 +2671,7 @@ class RHtmlFormatter extends RFormatter{
    * @return  string|array
    */
   protected static function escape($var){
-    return is_array($var) ? array_map('static::escape', $var) : htmlspecialchars($var ?? '', ENT_QUOTES);
+    return is_array($var) ? array_map(self::class . '::escape', $var) : htmlspecialchars($var ?? '', ENT_QUOTES);
   }
 
 }
