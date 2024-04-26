@@ -1,4 +1,7 @@
 <?php
+/*
+  Version: php-8.3 (2024-04-26)
+*/
 
 /**
  * Shortcut to ref, HTML mode
