@@ -849,7 +849,7 @@ class ref{
    * @param   array &$options   Optional, options to gather (from operators)
    * @return  array             Array of string expressions
    */
-  public static function getInputExpressions(array &$options = null){
+  public static function getInputExpressions(?array &$options = null){
 
     // used to determine the position of the current call,
     // if more queries calls were made on the same line
@@ -974,7 +974,7 @@ class ref{
    * @param   Reflector|null $context   Object context (for methods)
    * @return  string
    */
-  protected function fromReflector(\Reflector $reflector, $single = '', \Reflector $context = null){
+  protected function fromReflector(\Reflector $reflector, $single = '', ?\Reflector $context = null){
 
     // @todo: test this
     $hash = var_export(func_get_args(), true);
