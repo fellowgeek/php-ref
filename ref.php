@@ -2697,6 +2697,13 @@ class RTextFormatter extends RFormatter{
     $out        = '',
 
     /**
+     * Output cache
+     *
+     * @var  array
+     */
+    $cache      = array(),
+
+    /**
      * Tracks current nesting level
      *
      * @var  int
